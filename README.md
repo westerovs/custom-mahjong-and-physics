@@ -1,5 +1,4 @@
 # TEMPLATE
 🟢RUN:<br>
-https://westerovs.github.com
+https://westerovs.github.io/save-the-cat/
 <br>
-<img src="cover.jpg">
