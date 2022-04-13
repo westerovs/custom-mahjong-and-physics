@@ -59,6 +59,19 @@ img {
     border: 2px dashed gold;
 }
 
+.info {
+    width: 100%;
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-transform: uppercase;
+    font-size: 14px;
+    z-index: 100;
+    text-align: center;
+    color: white;
+}
+
 .chip {
     position: absolute;
     width: 100px;
