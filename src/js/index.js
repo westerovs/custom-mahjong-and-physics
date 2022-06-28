@@ -1,125 +1,87 @@
-// danger! Очень грязный код !
+import { getRandom, render, setPosition } from './utils.js';
+import Chip from './Chip.js';
 
-const getRandom = (min, max) => {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
-const render = (container, template, place = 'beforeend') => {
-  if (container instanceof Element) {
-    container.insertAdjacentHTML(place, template)
-  }
-}
-
-const game = document.querySelector('.wrapper')
-
-const createChip = () => {
-  const random = getRandom(1, 5)
+class Game {
+  constructor() {
+    this.wrapper = document.querySelector('.wrapper')
+    this.btn     = this.wrapper.querySelector('.shuffle')
+    this.tempChips = new Set()
   
-  const chip = document.createElement('div')
-  chip.classList.add('chip')
-  chip.style.top = `${ getRandom(50, 350) }px`
-  chip.style.left = `${ getRandom(-50, 350) }px`
-  chip.style.backgroundColor = `rgb(${ getRandom(0, 255) }, ${ getRandom(0, 255) }, ${ getRandom(0, 255) })`
-  chip.innerHTML = random
-  chip.setAttribute('data-value', random)
-  game.append(chip)
-}
-
-for (let i = 0; i < 6; i++) {
-  createChip()
-}
-
-let tempChips = new Set()
-const matchBlocks = (event) => {
-  if (!event.target.dataset.value) return
-  
-  // получить 1ю фишку
-  tempChips.add(event.target)
-  
-  const box1 = [...tempChips][0]
-  box1.classList.add('active')
-  
-  if (event.target === [...tempChips][0]) return
-  
-  if (box1.dataset.value === event.target.dataset.value) {
-    const box2 = event.target;
-    [...tempChips][0].remove();
-    [...tempChips][1].remove()
-    tempChips.clear()
-    fallingDown()
-    return
+    this.isActiveFlag = false
+    this.MAX_CHIPS = 6
   }
   
-  if ([...tempChips][0].dataset.value !== event.target.dataset.value) {
-    [...tempChips][0].classList.add('error');
-    [...tempChips][1].classList.add('error');
-    
-    setTimeout(() => {
-      [...tempChips][0].classList.remove('error', 'active');
-      [...tempChips][1].classList.remove('error', 'active');
-      tempChips.clear()
-      return
-    }, 500)
+  start() {
+    this.createChips()
+    this.initEvents()
   }
   
-}
-
-game.addEventListener('click', matchBlocks)
-
-// ------------------------
-const cat = document.querySelector('.cat')
-
-
-let y = 0
-let posBox = 0
-let boxY = 0
-
-function fallingDown(currentY = 0) {
-  boxY = 0
-  const boxes = document.querySelectorAll('.chip')
-  const xxx = setInterval(() => {
-    cat.style.transform = `translateY(${ currentY + y }px)`
-    y++
-  
-    for (let i = 0; i < boxes.length; i++) {
-      if (
-        cat.getBoundingClientRect().top < boxes[i].getBoundingClientRect().bottom &&
-        cat.getBoundingClientRect().right > boxes[i].getBoundingClientRect().left &&
-        cat.getBoundingClientRect().bottom > boxes[i].getBoundingClientRect().top &&
-        cat.getBoundingClientRect().left < boxes[i].getBoundingClientRect().right
-      ) {
-        y = boxes[i].getBoundingClientRect().top - 50
-        clearInterval(xxx)
-        break
-      }
-      
-      if (cat.getBoundingClientRect().bottom >= game.getBoundingClientRect().bottom) {
-        console.log(111111111)
-        y = boxes[i].getBoundingClientRect().bottom
-        posBox = boxes[i].getBoundingClientRect().bottom
-        cat.classList.add('win')
-        boxes[i].classList.add('hide')
-        document.querySelector('h1').classList.remove('visually-hidden')
-        clearInterval(xxx)
-        break
-      }
+  createChips = () => {
+    for (let i = 0; i < this.MAX_CHIPS; i++) {
+      new Chip(this.wrapper)
     }
-  }, 10)
+  }
+  
+  initEvents = () => {
+    this.wrapper.addEventListener('click', this.touchStart)
+    this.btn.addEventListener('click', this.shuffle)
+  }
+  
+  touchStart = (event) => {
+    this.matchBlocks(event)
+  }
+  
+  matchBlocks = (event) => {
+    const target = event.target
+    if (!target.dataset.value) return
+  
+    this.isActiveFlag = !this.isActiveFlag
+    
+    // добавляем в массив текущий элемент
+    this.tempChips.add(target)
+    
+    const box1 = [...this.tempChips][0]
+    box1.style.zIndex = '1'
+    box1.classList.add('active')
+  
+    if (!this.isActiveFlag && target === box1) {
+      box1.classList.remove('active')
+      this.tempChips.clear()
+      return;
+    }
+    
+    if (target === [...this.tempChips][0]) return
+    
+    // если найдены 2 одинаковых
+    if (box1.dataset.value === target.dataset.value) {
+      [...this.tempChips][0].remove();
+      [...this.tempChips][1].remove()
+      this.tempChips.clear()
+      return
+    }
+    
+    // если они не равны
+    if ([...this.tempChips][0].dataset.value !== target.dataset.value) {
+      console.log(111);
+    
+      [...this.tempChips][0].classList.add('error');
+      [...this.tempChips][1].classList.add('error');
+      
+      setTimeout(() => {
+        box1.style.zIndex = '0';
+        [...this.tempChips].forEach(it => it.classList.remove('error', 'active'));
+        this.tempChips.clear()
+      }, 500)
+    }
+  }
+  
+  shuffle = () => {
+    const chips = document.querySelectorAll('.chip')
+
+    chips.forEach(box => setPosition(this.wrapper, box))
+  }
 }
 
-fallingDown()
 
-const btn = document.querySelector('.shuffle')
 
-btn.addEventListener('click', () => {
-  
-  const boxes = document.querySelectorAll('.chip')
-  boxes.forEach(box => {
-    box.style.top = `${ getRandom(50, 350) + boxY}px`
-    box.style.left = `${ getRandom(-50, 350)}px`
-  })
-  
-  setInterval(() => {
-    fallingDown(posBox)
-  }, 100)
-})
+new Game().start()
